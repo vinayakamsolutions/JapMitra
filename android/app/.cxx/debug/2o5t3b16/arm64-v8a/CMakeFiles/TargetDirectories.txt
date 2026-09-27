@@ -1,0 +1,2 @@
+E:/Projects/JapMitra-correction/android/app/.cxx/debug/2o5t3b16/arm64-v8a/CMakeFiles/edit_cache.dir
+E:/Projects/JapMitra-correction/android/app/.cxx/debug/2o5t3b16/arm64-v8a/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,30 @@
+{
+  "notice": "SAMPLE DEVELOPMENT DATA - not verified Panchang timings.",
+  "days": [
+    {
+      "date": "2026-09-12",
+      "tithi": "Sample Tithi",
+      "paksha": "Sample Paksha",
+      "nakshatra": "Sample Nakshatra",
+      "yoga": "Sample Yoga",
+      "karana": "Sample Karana",
+      "sunrise": "Sample",
+      "sunset": "Sample",
+      "moonrise": "Sample",
+      "moonset": "Sample",
+      "rahuKaal": "Sample",
+      "yamaganda": "Sample",
+      "gulika": "Sample",
+      "abhijit": "Sample",
+      "vrat": [
+        "Sample Vrat"
+      ],
+      "festivals": [
+        "Sample Festival"
+      ],
+      "observances": [
+        "Development data only"
+      ]
+    }
+  ]
+}

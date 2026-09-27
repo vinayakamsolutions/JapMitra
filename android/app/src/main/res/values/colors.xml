@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The approved logo already has a near-black outer area, so the adaptive
+         icon background is black and the padded foreground blends into it. -->
+    <color name="ic_launcher_background">#000000</color>
+    <!-- Matches AppTheme.cream so the native launch window matches the splash. -->
+    <color name="app_cream">#FFF8ED</color>
+</resources>

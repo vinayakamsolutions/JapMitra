@@ -1,0 +1,47 @@
+import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
+import '../jap/jap_screen.dart';
+import '../panchang/panchang_screen.dart';
+import '../rashifal/rashifal_screen.dart';
+import '../settings/more_screen.dart';
+import 'home_screen.dart';
+
+class Shell extends StatefulWidget {
+  const Shell({super.key});
+  @override
+  State<Shell> createState() => _ShellState();
+}
+
+class _ShellState extends State<Shell> {
+  int index = 0;
+
+  @override
+  Widget build(BuildContext c) {
+    final l = AppLocalizations.of(c);
+    final screens = [
+      const HomeScreen(),
+      const JapScreen(),
+      const PanchangScreen(),
+      const RashifalScreen(),
+      const MoreScreen(),
+    ];
+    return Scaffold(
+      body: screens[index],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: index,
+        onDestinationSelected: (v) => setState(() => index = v),
+        destinations: [
+          NavigationDestination(
+              icon: const Icon(Icons.home), label: l.t('home')),
+          NavigationDestination(icon: const Icon(Icons.spa), label: l.t('jap')),
+          NavigationDestination(
+              icon: const Icon(Icons.calendar_month), label: l.t('panchang')),
+          NavigationDestination(
+              icon: const Icon(Icons.auto_awesome), label: l.t('rashifal')),
+          NavigationDestination(
+              icon: const Icon(Icons.menu), label: l.t('more')),
+        ],
+      ),
+    );
+  }
+}

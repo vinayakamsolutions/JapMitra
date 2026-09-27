@@ -1,0 +1,2 @@
+E:/Projects/JapMitra-correction/android/app/.cxx/debug/4c6i2tp3/armeabi-v7a/CMakeFiles/edit_cache.dir
+E:/Projects/JapMitra-correction/android/app/.cxx/debug/4c6i2tp3/armeabi-v7a/CMakeFiles/rebuild_cache.dir

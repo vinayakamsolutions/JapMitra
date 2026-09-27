@@ -1,0 +1,51 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'dev.flutter.flutter-gradle-plugin'
+}
+
+android {
+    namespace 'com.vinayakamsolutions.japmitra'
+    compileSdk 36
+    ndkVersion '27.1.12297006'
+
+    defaultConfig {
+        applicationId 'com.vinayakamsolutions.japmitra'
+        minSdkVersion flutter.minSdkVersion
+        targetSdk 35
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+}
+
+dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+}
+
+// Flutter tooling discovers APKs under <flutter-project>/build/app/outputs/flutter-apk.
+// By default AGP writes this app module's output to android/app/build, which the tool
+// cannot find. Redirect the module build directory to the Flutter project's build dir
+// (the long-standing Flutter template layout).
+layout.buildDirectory.set(file("${rootProject.projectDir.parent}/build/app"))
+
+flutter {
+    source '../..'
+}

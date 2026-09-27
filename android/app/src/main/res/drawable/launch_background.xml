@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shown for the few frames before the Flutter splash takes over, so it uses
+     the same cream as the app theme (AppTheme.cream) to avoid a white flash. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/app_cream" />
+</layer-list>
