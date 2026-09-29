@@ -1,0 +1,121 @@
+name: Generate daily Rashifal
+
+# Publishes one day of original Rashifal content for all twelve signs.
+#
+# The app reads data/rashifal/YYYY-MM-DD.json over the network (see
+# lib/features/rashifal/services/rashifal_remote_service.dart), so this workflow
+# is what keeps that location populated. It is the only writer.
+#
+# On cost: this job runs on GitHub's free runners and the generator makes no
+# network calls and needs no API key, so a day of content costs nothing.
+
+on:
+  schedule:
+    # 12:10 AM IST is 18:40 UTC the previous day. GitHub's cron syntax is UTC
+    # only, so the conversion lives here rather than in the workflow. It is
+    # deliberately not midnight: the run lands after the Indian day has turned.
+    #
+    # GitHub does not guarantee an exact start time — a busy runner can delay a
+    # scheduled job by a few minutes. The script resolves the IST date itself, so
+    # a slightly late run still writes the correct day.
+    - cron: '40 18 * * *'
+
+  # Lets a maintainer backfill or repair a day by hand.
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'YYYY-MM-DD to generate. Leave empty for the current IST date.'
+        required: false
+        default: ''
+      force:
+        description: 'Overwrite an existing day even if it already validates'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Resolves the date in Asia/Kolkata and writes data/rashifal/<date>.json.
+      # Exits non-zero when the generated payload fails validation, which fails
+      # this job rather than committing a broken day.
+      - name: Generate today's Rashifal
+        env:
+          REQUESTED_DATE: ${{ inputs.date }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          args=()
+          if [ -n "$REQUESTED_DATE" ]; then
+            args+=(--date "$REQUESTED_DATE")
+          fi
+          if [ "$FORCE" = "true" ]; then
+            args+=(--force)
+          fi
+          python scripts/generate_rashifal.py "${args[@]}"
+
+      # Re-checks the file that is about to be committed, independently of the
+      # generator's own exit status, so an invalid day cannot reach the app even
+      # if it was produced some other way. Manual runs verify the requested date;
+      # scheduled runs verify the current Asia/Kolkata date.
+      - name: Verify the published day is valid
+        env:
+          REQUESTED_DATE: ${{ inputs.date }}
+        run: |
+          if [ -n "$REQUESTED_DATE" ]; then
+            TARGET_DATE="$REQUESTED_DATE"
+          else
+            TARGET_DATE=$(python -c "from datetime import datetime,timezone,timedelta;print(datetime.now(timezone(timedelta(hours=5,minutes=30))).strftime('%Y-%m-%d'))")
+          fi
+          # Carried into the commit step, since shell variables do not survive
+          # between steps.
+          echo "TARGET_DATE=$TARGET_DATE" >> "$GITHUB_ENV"
+
+          TARGET_PATH="data/rashifal/$TARGET_DATE.json"
+          if [ ! -f "$TARGET_PATH" ]; then
+            echo "error: expected $TARGET_PATH to exist after generation" >&2
+            exit 1
+          fi
+          python - "$TARGET_PATH" <<'PY'
+          import json, sys
+          from pathlib import Path
+
+          sys.path.insert(0, "scripts")
+          import generate_rashifal as g
+
+          day = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8-sig"))
+          errors = g.validate(day)
+          if day.get("date") != Path(sys.argv[1]).stem:
+              errors.append("payload date does not match the requested date")
+          if errors:
+              sys.exit("invalid day: " + "; ".join(errors))
+          print(f"valid: {len(g.SIGNS)} signs in {sorted(day['languages'])}")
+          PY
+
+      - name: Commit the day, if it changed
+        run: |
+          # status --porcelain is used rather than git diff because a newly
+          # generated day is untracked, and git diff ignores untracked files —
+          # which would make a brand new day look like "no change".
+          if [ -z "$(git status --porcelain -- data/rashifal)" ]; then
+            echo "No change: data/rashifal is already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/rashifal
+          git commit -m "data: Rashifal for $TARGET_DATE"
+          git push
+        env:
+          TARGET_DATE: ${{ env.TARGET_DATE }}
