@@ -8,6 +8,12 @@ name: Generate daily Rashifal
 #
 # On cost: this job runs on GitHub's free runners and the generator makes no
 # network calls and needs no API key, so a day of content costs nothing.
+#
+# Recovery: if a scheduled run is delayed or missed, the workflow can be
+# re-run manually via workflow_dispatch. The generator resolves the current
+# IST date at runtime, so a delayed run still produces the correct day.
+# The generator never overwrites an existing valid file unless --force is
+# passed, so re-running is always safe.
 
 on:
   schedule:
@@ -38,6 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      issues: write
 
     steps:
       - name: Check out repository
@@ -47,6 +54,69 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      # Recovery: identify missed dates between the last valid file and today.
+      # This runs before normal generation so missed days are backfilled
+      # automatically without manual intervention.
+      - name: Identify missed dates
+        run: |
+          python - <<'PY'
+          import json
+          import sys
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+
+          sys.path.insert(0, "scripts")
+          import generate_rashifal as g
+
+          IST = timezone(timedelta(hours=5, minutes=30))
+          today_ist = datetime.now(IST).date()
+          data_dir = Path("data/rashifal")
+
+          existing_dates = set()
+          if data_dir.exists():
+              for f in data_dir.glob("*.json"):
+                  try:
+                      day = json.loads(f.read_text(encoding="utf-8-sig"))
+                      if not g.validate(day):
+                          existing_dates.add(datetime.strptime(day["date"], "%Y-%m-%d").date())
+                  except (OSError, ValueError, KeyError):
+                      continue
+
+          if not existing_dates:
+              print("No existing valid dates found")
+              Path(".recovery_dates").write_text("", encoding="utf-8")
+              sys.exit(0)
+
+          latest = max(existing_dates)
+          missing = []
+          current = latest + timedelta(days=1)
+          while current < today_ist:
+              missing.append(current.isoformat())
+              current += timedelta(days=1)
+
+          if missing:
+              print(f"Missed dates to recover: {missing}")
+          else:
+              print(f"No missing dates (latest: {latest}, today: {today_ist})")
+
+          Path(".recovery_dates").write_text("\n".join(missing), encoding="utf-8")
+          PY
+
+      # Generate each missed date sequentially. The generator validates each
+      # date before writing and refuses to overwrite existing valid files.
+      - name: Generate missed dates
+        run: |
+          if [ -f .recovery_dates ] && [ -s .recovery_dates ]; then
+            while IFS= read -r date; do
+              if [ -n "$date" ]; then
+                echo "Generating missed date: $date"
+                python scripts/generate_rashifal.py --date "$date"
+              fi
+            done < .recovery_dates
+          else
+            echo "No missed dates to generate"
+          fi
 
       # Resolves the date in Asia/Kolkata and writes data/rashifal/<date>.json.
       # Exits non-zero when the generated payload fails validation, which fails
@@ -65,11 +135,11 @@ jobs:
           fi
           python scripts/generate_rashifal.py "${args[@]}"
 
-      # Re-checks the file that is about to be committed, independently of the
+      # Re-checks all files that are about to be committed, independently of the
       # generator's own exit status, so an invalid day cannot reach the app even
-      # if it was produced some other way. Manual runs verify the requested date;
-      # scheduled runs verify the current Asia/Kolkata date.
-      - name: Verify the published day is valid
+      # if it was produced some other way. Validates both recovered dates and
+      # the current target date.
+      - name: Verify all generated days are valid
         env:
           REQUESTED_DATE: ${{ inputs.date }}
         run: |
@@ -82,26 +152,49 @@ jobs:
           # between steps.
           echo "TARGET_DATE=$TARGET_DATE" >> "$GITHUB_ENV"
 
-          TARGET_PATH="data/rashifal/$TARGET_DATE.json"
-          if [ ! -f "$TARGET_PATH" ]; then
-            echo "error: expected $TARGET_PATH to exist after generation" >&2
-            exit 1
+          # Build list of all dates to validate (recovered + target)
+          DATES_FILE=".validation_dates"
+          : > "$DATES_FILE"
+          if [ -f .recovery_dates ] && [ -s .recovery_dates ]; then
+            cat .recovery_dates >> "$DATES_FILE"
           fi
-          python - "$TARGET_PATH" <<'PY'
+          echo "$TARGET_DATE" >> "$DATES_FILE"
+
+          python - "$DATES_FILE" <<'PY'
           import json, sys
           from pathlib import Path
 
           sys.path.insert(0, "scripts")
           import generate_rashifal as g
 
-          day = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8-sig"))
-          errors = g.validate(day)
-          if day.get("date") != Path(sys.argv[1]).stem:
-              errors.append("payload date does not match the requested date")
-          if errors:
-              sys.exit("invalid day: " + "; ".join(errors))
-          print(f"valid: {len(g.SIGNS)} signs in {sorted(day['languages'])}")
+          dates_file = sys.argv[1]
+          dates = [line.strip() for line in Path(dates_file).read_text().splitlines() if line.strip()]
+
+          for date_str in dates:
+              target_path = Path(f"data/rashifal/{date_str}.json")
+              if not target_path.exists():
+                  print(f"error: {target_path} does not exist", file=sys.stderr)
+                  sys.exit(1)
+              day = json.loads(target_path.read_text(encoding="utf-8-sig"))
+              errors = g.validate(day)
+              if day.get("date") != date_str:
+                  errors.append(f"payload date does not match {date_str}")
+              if errors:
+                  sys.exit(f"invalid day {date_str}: " + "; ".join(errors))
+              print(f"valid: {date_str} ({len(g.SIGNS)} signs)")
           PY
+
+      # Safety check: ensure the date is not in the future. This prevents a
+      # delayed run from accidentally generating a future date if the system
+      # clock is wrong or the run is delayed across midnight.
+      - name: Verify date is not in the future
+        run: |
+          TODAY_IST=$(python -c "from datetime import datetime,timezone,timedelta;print(datetime.now(timezone(timedelta(hours=5,minutes=30))).strftime('%Y-%m-%d'))")
+          if [[ "$TARGET_DATE" > "$TODAY_IST" ]]; then
+            echo "error: date $TARGET_DATE is in the future (today is $TODAY_IST)"
+            exit 1
+          fi
+          echo "Date check passed: $TARGET_DATE is not in the future"
 
       - name: Commit the day, if it changed
         run: |
@@ -119,3 +212,12 @@ jobs:
           git push
         env:
           TARGET_DATE: ${{ env.TARGET_DATE }}
+
+      # Creates a GitHub issue when the workflow fails, so a missed or broken
+      # day is visible without monitoring the Actions tab. Uses only GitHub's
+      # built-in token and CLI — no external services or secrets.
+      - name: Notify on failure
+        if: failure()
+        run: 'gh issue create --title "Rashifal workflow failed: ${{ github.run_id }}" --body "The daily Rashifal workflow failed. Run ID: ${{ github.run_id }}. Please check the logs and re-run via workflow_dispatch if needed." --label "bug" --label "automation"'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
