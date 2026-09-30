@@ -9,22 +9,22 @@ name: Generate daily Rashifal
 # On cost: this job runs on GitHub's free runners and the generator makes no
 # network calls and needs no API key, so a day of content costs nothing.
 #
-# Recovery: if a scheduled run is delayed or missed, the workflow can be
-# re-run manually via workflow_dispatch. The generator resolves the current
-# IST date at runtime, so a delayed run still produces the correct day.
-# The generator never overwrites an existing valid file unless --force is
-# passed, so re-running is always safe.
+# Schedule: Asia/Kolkata (IST). Scheduled runs execute from the default branch
+# (main). The run is deliberately not at midnight — it lands after the Indian
+# day has turned. GitHub does not guarantee an exact start time; a busy runner
+# can delay a scheduled job by a few minutes. The generator resolves the IST
+# date itself at runtime, so a slightly late run still writes the correct day.
+#
+# Recovery: if a scheduled run is delayed or missed, the workflow's recovery
+# logic automatically fills any gap between the last valid file and today. The
+# generator never overwrites an existing valid file unless --force is passed,
+# so re-running is always safe. Manual backfill is also available via
+# workflow_dispatch.
 
 on:
   schedule:
-    # 12:10 AM IST is 18:40 UTC the previous day. GitHub's cron syntax is UTC
-    # only, so the conversion lives here rather than in the workflow. It is
-    # deliberately not midnight: the run lands after the Indian day has turned.
-    #
-    # GitHub does not guarantee an exact start time — a busy runner can delay a
-    # scheduled job by a few minutes. The script resolves the IST date itself, so
-    # a slightly late run still writes the correct day.
-    - cron: '40 18 * * *'
+    - cron: '10 0 * * *'
+      timezone: 'Asia/Kolkata'
 
   # Lets a maintainer backfill or repair a day by hand.
   workflow_dispatch:
