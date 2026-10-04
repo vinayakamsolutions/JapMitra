@@ -96,11 +96,21 @@ class JapRepository {
     return computeStreakStats(days.map((r) => r.date), n);
   }
 
-  Future<List<String>> customMantras() => store.listCustomMantras();
+  /// Every stored custom mantra, with the display metadata the editor collected.
+  Future<List<CustomMantra>> custom() => store.listCustom();
 
-  Future<void> addCustom(String text) async {
+  /// Just the mantra texts, for callers that key on identity alone.
+  Future<List<String>> customMantras() async =>
+      [for (final m in await store.listCustom()) m.text];
+
+  /// Saves a custom mantra together with its optional name and deity photo.
+  ///
+  /// The text is the identity: it must stay stable across renames so that tap
+  /// history, statistics and streaks keep matching the mantra the user already
+  /// has counts for.
+  Future<void> addCustom(String text, {String? name, String? photo}) async {
     if (text.trim().isEmpty) throw ArgumentError('Empty mantra');
-    await store.addCustomMantra(text.trim());
+    await store.addCustomMantra(text.trim(), name: name, photo: photo);
   }
 
   Future<void> deleteCustom(String text) => store.removeCustomMantra(text);

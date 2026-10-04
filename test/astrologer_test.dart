@@ -305,32 +305,28 @@ void main() {
   });
 
   group('Home integration', () {
-    testWidgets('Home offers a consultation card that opens the profile',
+    testWidgets('Home renders the premium feature grid with navigation',
         (tester) async {
       final state = await _state();
       await tester.pumpWidget(_app(const HomeScreen(), state));
       await tester.pumpAndSettle();
 
-      await _scrollTo(tester, find.text('आचार्य से परामर्श'));
-      expect(find.text('आचार्य से परामर्श'), findsOneWidget);
-      expect(find.textContaining('Abhijeet Srivastava'), findsOneWidget);
-      expect(find.textContaining('₹501'), findsOneWidget);
-      expect(find.textContaining('7 Days a Week'), findsOneWidget);
+      expect(find.text('Jap'), findsOneWidget);
+      expect(find.text('Panchang'), findsOneWidget);
+      expect(find.text('Rashifal'), findsOneWidget);
+      expect(find.text('Numerology'), findsOneWidget);
 
-      await tester.tap(find.text('आचार्य से परामर्श'));
+      await tester.tap(find.text('Numerology'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(AstrologerProfileScreen), findsOneWidget);
-      expect(find.text('Abhijeet Srivastava'), findsOneWidget);
+      expect(find.text('Numerology'), findsWidgets);
     });
 
-    testWidgets('the card does not become a bottom navigation tab',
-        (tester) async {
+    testWidgets('Home does not become a bottom navigation tab', (tester) async {
       final state = await _state();
       await tester.pumpWidget(_app(const HomeScreen(), state));
       await tester.pumpAndSettle();
 
-      // Five destinations, exactly as before this feature existed.
       expect(find.byType(BottomNavigationBar), findsNothing);
       expect(find.byType(NavigationBar), findsNothing);
     });

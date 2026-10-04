@@ -252,6 +252,98 @@ class PanchangNames {
   }
 }
 
+/// The twelve Hindu lunar months, in the traditional amanta order.
+///
+/// The month that is in force is decided by the Sun's sidereal zodiac sign: the
+/// month beginning at the Sun's entry into [rashi] is the one named for the
+/// nakshatra that sign spans, which is the correspondence given by
+/// [lunarMonthIndexOn]. Because a Gregorian month almost always contains one
+/// solar ingress, a Gregorian month is normally named after two lunar months.
+class PanchangMonths {
+  static const names = [
+    'चैत्र',
+    'वैशाख',
+    'ज्येष्ठ',
+    'आषाढ़',
+    'श्रावण',
+    'भाद्रपद',
+    'आश्विन',
+    'कार्तिक',
+    'मार्गशीर्ष',
+    'पौष',
+    'माघ',
+    'फाल्गुन',
+  ];
+  static const namesEn = [
+    'Chaitra',
+    'Vaishakha',
+    'Jyeshtha',
+    'Ashadha',
+    'Shravana',
+    'Bhadrapada',
+    'Ashwin',
+    'Kartika',
+    'Margashirsha',
+    'Pausha',
+    'Magha',
+    'Phalguna',
+  ];
+
+  static String name(int index, {required bool english}) =>
+      english ? namesEn[index % 12] : names[index % 12];
+}
+
+/// The Hindu lunar month index (amanta order) in force on [date].
+///
+/// Derived from the Sun's sidereal longitude at local midnight, so it needs only
+/// the astronomy helpers that are already used elsewhere: no second ephemeris and
+/// no hardcoded table of dates.
+int lunarMonthIndexOn(DateTime date, {int tzOffsetMin = 330}) {
+  final jd = julianDayAt0hUt(date) - tzOffsetMin / 1440.0;
+  final sidereal = _normalizeS(solarLongitude(jd) - ayanamsaDeg(date));
+  final rashi = (sidereal / 30).floor() % 12;
+  // Mesha opens Vaishakha; Meena opens Chaitra.
+  return (rashi + 1) % 12;
+}
+
+/// Number of days in the given Gregorian month.
+int daysInMonth(int year, int month) => DateTime(year, month + 1, 0).day;
+
+/// A whole Gregorian month of calculated Panchang, ready for the calendar grid.
+///
+/// Built once per month and city and then reused, so selecting a day never
+/// recomputes the month.
+class PanchangMonthView {
+  const PanchangMonthView({
+    required this.month,
+    required this.days,
+    required this.leadingBlanks,
+    required this.lunarMonths,
+  });
+
+  /// First day of the Gregorian month being shown.
+  final DateTime month;
+
+  /// One entry per day of the month, indexed from day 1.
+  final List<PanchangDay?> days;
+
+  /// Blank cells before day 1, for a Sunday-first grid.
+  final int leadingBlanks;
+
+  /// The one or two lunar months this Gregorian month spans.
+  final List<int> lunarMonths;
+
+  int get dayCount => days.length;
+
+  /// The day entry for the 1-based [day] of this month.
+  PanchangDay? day(int day) => days[day - 1];
+
+  /// Header text naming the lunar month or months covered.
+  String lunarMonthLabel({required bool english}) => lunarMonths
+      .map((i) => PanchangMonths.name(i, english: english))
+      .join(' • ');
+}
+
 /// Rahu Kaal, Yamaganda and Gulika segments are based on the classical
 /// subdivision of the day (sunrise to sunset) into 8 equal parts, keyed to the
 /// weekday. Segment 1 is the first part after sunrise.
@@ -323,6 +415,62 @@ class PanchangDay {
 }
 
 class PanchangRepository {
+  /// Calculated months, keyed by city and first-of-month.
+  ///
+  /// A month is a pure function of those two things, so it is worth keeping:
+  /// opening the calendar again, or tapping back and forth between days, costs
+  /// nothing after the first build.
+  final Map<String, PanchangMonthView> _monthCache = {};
+
+  /// Builds (or returns the cached) calculated [month] for [cityName].
+  ///
+  /// [month] may be any day in the month; only its year and month are used.
+  Future<PanchangMonthView> buildMonth(DateTime month, String cityName) async {
+    final first = DateTime(month.year, month.month);
+    final city = cityOrFallback(cityName).name;
+    final key = '$city|${first.year}-${first.month}';
+    final cached = _monthCache[key];
+    if (cached != null) return cached;
+
+    final count = daysInMonth(first.year, first.month);
+    final tz = cityOrFallback(cityName).tzOffsetMin;
+    final days = <PanchangDay?>[
+      for (var i = 0; i < count; i++)
+        await getDay(first.add(Duration(days: i)), city)
+    ];
+
+    // A Gregorian month normally straddles one solar ingress, so collect the
+    // distinct lunar months it covers in chronological order.
+    final lunar = <int, int>{};
+    for (var i = 0; i < count; i++) {
+      // putIfAbsent keeps the first day each lunar month appears on, which is
+      // what orders them: sorting by index alone would put Chaitra (index 0)
+      // before Phalguna (index 11) even though Phalguna comes first in March.
+      lunar.putIfAbsent(
+          lunarMonthIndexOn(first.add(Duration(days: i)), tzOffsetMin: tz),
+          () => i);
+    }
+    final ordered = lunarMonthsInOrder(lunar);
+
+    final view = PanchangMonthView(
+      month: first,
+      days: List.unmodifiable(days),
+      // Sunday-first grid: Monday is one leading blank, Sunday is none.
+      leadingBlanks: first.weekday % 7,
+      lunarMonths: ordered,
+    );
+    _monthCache[key] = view;
+    return view;
+  }
+
+  /// Returns the months in [firstSeen] ordered by the day of the Gregorian
+  /// month they first appear on, so the heading reads in calendar order.
+  static List<int> lunarMonthsInOrder(Map<int, int> firstSeen) {
+    final ordered = firstSeen.entries.toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
+    return ordered.map((e) => e.key).toList();
+  }
+
   /// Computes the full daily Panchang for [date] (local) at [cityName].
   /// Computation is synchronous in the model; wrapped for interface parity.
   Future<PanchangDay?> getDay(DateTime date, String cityName) async {

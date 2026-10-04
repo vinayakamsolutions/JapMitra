@@ -8,6 +8,34 @@ class JapEventRow {
   final DateTime at;
 }
 
+/// One stored custom mantra.
+///
+/// [text] is the identity, and is what every tap, statistic and baseline is
+/// keyed on. [name] and [photo] are optional display metadata the user adds in
+/// the mantra editor; when they are absent the mantra simply behaves exactly as
+/// it did before they existed.
+class CustomMantra {
+  const CustomMantra({required this.text, this.name, this.photo});
+
+  final String text;
+  final String? name;
+
+  /// Absolute path of the deity photo inside app-private storage, or null.
+  final String? photo;
+
+  /// What the UI shows for this mantra: the user's name when they set one,
+  /// otherwise the mantra text itself.
+  String get label {
+    final n = name?.trim();
+    return n == null || n.isEmpty ? text : n;
+  }
+
+  bool get hasPhoto {
+    final p = photo?.trim();
+    return p != null && p.isNotEmpty;
+  }
+}
+
 /// Thin storage contract behind [JapRepository].
 ///
 /// Kept independent of sqflite so production uses [SqfliteJapStore] while
@@ -20,8 +48,8 @@ abstract class JapStore {
   Future<void> deleteSince(String mantra, DateTime start, {DateTime? end});
   Future<List<JapEventRow>> events(String mantra,
       {DateTime? start, DateTime? end});
-  Future<List<String>> listCustomMantras();
-  Future<void> addCustomMantra(String text);
+  Future<List<CustomMantra>> listCustom();
+  Future<void> addCustomMantra(String text, {String? name, String? photo});
   Future<void> removeCustomMantra(String text);
 }
 
@@ -100,17 +128,31 @@ class SqfliteJapStore implements JapStore {
   }
 
   @override
-  Future<List<String>> listCustomMantras() async {
+  Future<List<CustomMantra>> listCustom() async {
     final d = await _db;
     final rows = await d.query('custom_mantras', orderBy: 'text');
-    return rows.map((e) => e['text'] as String).toList();
+    return [
+      for (final e in rows)
+        CustomMantra(
+          text: e['text'] as String,
+          name: e['name'] as String?,
+          photo: e['photo'] as String?,
+        )
+    ];
   }
 
   @override
-  Future<void> addCustomMantra(String text) async {
+  Future<void> addCustomMantra(String text,
+      {String? name, String? photo}) async {
     final d = await _db;
-    await d
-        .insert('custom_mantras', {'text': text.trim(), 'category': 'Custom'});
+    final n = name?.trim();
+    final p = photo?.trim();
+    await d.insert('custom_mantras', {
+      'text': text.trim(),
+      'category': 'Custom',
+      'name': n == null || n.isEmpty ? null : n,
+      'photo': p == null || p.isEmpty ? null : p,
+    });
   }
 
   @override

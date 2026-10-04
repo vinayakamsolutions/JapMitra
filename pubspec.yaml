@@ -19,6 +19,9 @@ dependencies:
   timezone: ^0.9.4
   url_launcher: ^6.3.2
   vibration: 3.2.1
+  image_picker: ^1.2.3
+  path_provider: ^2.1.6
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_test:
@@ -29,8 +32,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/data/
+    - assets/data/rashifal/
     - assets/icons/
     - assets/branding/
+    - assets/images/deities/
     # Listed explicitly: the approved photograph. Declaring the directory did
     # not bundle anything, and an explicit entry also keeps the APK honest about
     # exactly which image ships.

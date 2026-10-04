@@ -107,7 +107,6 @@ class _N extends State<NumerologyScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Disclaimer card.
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -128,7 +127,6 @@ class _N extends State<NumerologyScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          // DOB button.
           FilledButton.icon(
             onPressed: _pickDob,
             icon: const Icon(Icons.cake),
@@ -139,7 +137,6 @@ class _N extends State<NumerologyScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          // The date the reading is for.
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.event, color: Color(0xFF8A6A3A)),
@@ -154,7 +151,6 @@ class _N extends State<NumerologyScreen> {
             label: Text(l.t('calculateNumerology')),
           ),
           const SizedBox(height: 16),
-          // Results: only ever a value this screen calculated.
           if (result == null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),

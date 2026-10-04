@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,8 +9,10 @@ import 'package:japmitra/core/localization/app_localizations.dart';
 import 'package:japmitra/core/services/app_state.dart';
 import 'package:japmitra/features/numerology/numerology_screen.dart';
 import 'package:japmitra/features/numerology/numerology_service.dart';
-import 'package:japmitra/features/rashifal/rashifal_model.dart';
-import 'package:japmitra/features/rashifal/rashifal_screen.dart';
+import 'package:japmitra/features/rashifal/models/daily_rashifal.dart';
+import 'package:japmitra/features/rashifal/services/rashifal_repository.dart';
+import 'package:japmitra/features/rashifal/screens/rashifal_detail_screen.dart';
+import 'package:japmitra/features/rashifal/screens/rashifal_screen.dart';
 import 'package:japmitra/main.dart';
 
 Future<AppState> _state({String language = 'hi'}) async {
@@ -18,6 +22,49 @@ Future<AppState> _state({String language = 'hi'}) async {
   st.prefs = prefs;
   st.languageCode = language;
   return st;
+}
+
+/// A repository that serves one fixed day without touching the network.
+///
+/// The Rashifal screens read through a repository, so the widget tests supply
+/// one backed by this instead of the real remote source.
+class _OfflineRashifalRepository extends RashifalRepository {
+  _OfflineRashifalRepository({required this.dateKey, DateTime? today})
+      : super(now: today == null ? null : () => today);
+
+  final String dateKey;
+
+  DailyRashifal? _day;
+
+  @override
+  Future<RashifalDayResult?> getForDate(DateTime date) async {
+    if (dateKeyOf(date) != dateKey) return null;
+    return RashifalDayResult(data: _payload(), fromCache: false);
+  }
+
+  DailyRashifal _payload() {
+    return _day ??= DailyRashifal.tryParse(_build(dateKey))!;
+  }
+
+  static String _build(String key) {
+    final signs = <String, Object?>{
+      for (final sign in kRashifalSignKeys)
+        sign: <String, Object?>{
+          'general': 'general $sign $key',
+          'career': 'career $sign $key',
+          'finance': 'finance $sign $key',
+          'love': 'love $sign $key',
+          'health': 'health $sign $key',
+          'luckyNumber': 5,
+          'luckyColour': 'saffron',
+          'guidance': 'guidance $sign $key',
+        },
+    };
+    return jsonEncode(<String, Object?>{
+      'date': key,
+      'languages': {'hi': signs, 'en': signs},
+    });
+  }
 }
 
 /// Mirrors `JapMitraAppState`: the whole tree is rebuilt whenever AppState
@@ -81,6 +128,33 @@ Widget _wrap({
         ],
         builder: (context, child) => MediaQuery(
           data: MediaQueryData(textScaler: textScaler),
+          child: InheritedAppState(state: state, child: child!),
+        ),
+        home: home(),
+      ),
+    );
+
+/// Rashifal-only host preserves real viewport metrics for responsive layouts.
+/// The existing Numerology host and its tests remain unchanged.
+Widget _wrapRashifal({
+  required AppState state,
+  required Widget Function() home,
+  Locale locale = const Locale('hi'),
+  TextScaler textScaler = TextScaler.noScaling,
+}) =>
+    _RevisionHost(
+      state: state,
+      builder: (context) => MaterialApp(
+        locale: locale,
+        supportedLocales: const [Locale('hi'), Locale('en')],
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: textScaler),
           child: InheritedAppState(state: state, child: child!),
         ),
         home: home(),
@@ -174,12 +248,12 @@ Future<void> _expectResultRow(
   );
 }
 
-/// The tile for one zodiac sign, identified by its unique glyph.
+/// The card for one zodiac sign, identified by its unique glyph.
 ///
 /// A sign's name also appears in the "my sign" card at the top of the list, so
-/// the name alone is ambiguous; the glyph belongs only to its own tile.
+/// the name alone is ambiguous; the glyph belongs only to its own card.
 Finder _signTile(String glyph) =>
-    find.ancestor(of: find.text(glyph), matching: find.byType(ListTile));
+    find.ancestor(of: find.text(glyph), matching: find.byType(Card));
 
 void main() {
   group('NumerologyService', () {
@@ -277,53 +351,45 @@ void main() {
     });
   });
 
-  group('RashifalRepository', () {
-    test('never hands back unverified content as a reading', () async {
-      const repository = RashifalRepository();
-      for (final sign in signs) {
-        final content = await repository.getToday(sign[0]);
-        expect(content.signKey, sign[0]);
-        expect(content.isVerified, isFalse);
-        expect(content.hasContent, isFalse);
-        expect(content.general, isNull);
-        expect(content.career, isNull);
-        expect(content.finance, isNull);
-        expect(content.relationships, isNull);
-        expect(content.health, isNull);
-        expect(content.luckyNumber, isNull);
-        expect(content.luckyColour, isNull);
-        expect(content.dailyGuidance, isNull);
-      }
-    });
-  });
-
   group('Rashifal screen', () {
-    testWidgets('lists all twelve signs in both scripts and both languages',
+    // The screens read through a repository, so these tests supply one that
+    // serves a fixed day rather than reaching for the network.
+    _OfflineRashifalRepository repo() => _OfflineRashifalRepository(
+        dateKey: '2026-09-28', today: DateTime(2026, 9, 28));
+
+    testWidgets('lists all twelve signs in the selected language',
         (tester) async {
       _useViewport(tester, const Size(360, 640));
 
       for (final locale in const [Locale('hi'), Locale('en')]) {
         final l = AppLocalizations(locale);
         final state = await _state(language: locale.languageCode);
-        await tester.pumpWidget(_wrap(
+        // Pumping a placeholder first disposes the previous tree, so the new
+        // MaterialApp's locale is picked up rather than reused.
+        await tester.pumpWidget(const SizedBox());
+        await tester.pumpWidget(_wrapRashifal(
           state: state,
           locale: locale,
-          home: () => const RashifalScreen(),
+          home: () => RashifalScreen(repository: repo()),
         ));
         await tester.pumpAndSettle();
 
-        // Nothing is chosen yet, so the prompt is offered up front.
-        await _scrollToTop(tester);
         expect(find.text(l.t('myRashi')), findsOneWidget);
         expect(find.text(l.t('rashiNotSetNote')), findsOneWidget);
         expect(find.text(l.t('rashifal')), findsWidgets);
 
         for (final sign in signs) {
-          await _scrollTo(tester, find.text('${sign[1]} / ${sign[2]}'));
-          expect(find.text('${sign[1]} / ${sign[2]}'), findsOneWidget,
+          final name = locale.languageCode == 'hi' ? sign[1] : sign[2];
+          final otherName = locale.languageCode == 'hi' ? sign[2] : sign[1];
+          await _scrollTo(tester, find.text(name));
+          expect(find.text(name), findsOneWidget,
               reason: '${sign[0]} in $locale');
+          expect(
+              find.descendant(
+                  of: _signTile(sign[3]), matching: find.text(otherName)),
+              findsNothing);
         }
-        expect(find.byType(RashiDetail), findsNothing);
+        expect(find.byType(RashifalDetailScreen), findsNothing);
       }
     });
 
@@ -332,10 +398,10 @@ void main() {
       _useViewport(tester, const Size(360, 640));
       final l = AppLocalizations(const Locale('en'));
       final state = await _state(language: 'en');
-      await tester.pumpWidget(_wrap(
+      await tester.pumpWidget(_wrapRashifal(
         state: state,
         locale: const Locale('en'),
-        home: () => const RashifalScreen(),
+        home: () => RashifalScreen(repository: repo()),
       ));
       await tester.pumpAndSettle();
 
@@ -344,8 +410,8 @@ void main() {
       expect(find.byIcon(Icons.check_circle), findsNothing);
 
       final sign = signs[4];
-      await _scrollTo(tester, find.text('${sign[1]} / ${sign[2]}'));
-      await tester.tap(find.text('${sign[1]} / ${sign[2]}'));
+      await _scrollTo(tester, find.text(sign[2]));
+      await tester.tap(find.text(sign[2]));
       await tester.pumpAndSettle();
 
       // Persisted, and readable by a fresh state.
@@ -356,10 +422,10 @@ void main() {
       expect(restored.rashiSign, sign[0]);
 
       // The detail page marks it as mine.
-      expect(find.byType(RashiDetail), findsOneWidget);
+      expect(find.byType(RashifalDetailScreen), findsOneWidget);
       expect(find.text(l.t('myRashi')), findsOneWidget);
 
-      await tester.pageBack();
+      await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
 
       // The tile is highlighted and the top card is no longer a prompt.
@@ -384,80 +450,52 @@ void main() {
       );
     });
 
-    testWidgets('detail page names the sign and admits the reading is absent',
+    testWidgets('detail page shows the reading for the chosen sign',
         (tester) async {
       _useViewport(tester, const Size(360, 640));
       final l = AppLocalizations(const Locale('en'));
       final state = await _state(language: 'en');
-      await tester.pumpWidget(_wrap(
+      await tester.pumpWidget(_wrapRashifal(
         state: state,
         locale: const Locale('en'),
-        home: () => const RashifalScreen(),
+        home: () => RashifalScreen(repository: repo()),
       ));
       await tester.pumpAndSettle();
 
       final sign = signs[1];
-      await _scrollTo(tester, find.text('${sign[1]} / ${sign[2]}'));
-      await tester.tap(find.text('${sign[1]} / ${sign[2]}'));
+      await _scrollTo(tester, find.text(sign[2]));
+      await tester.tap(find.text(sign[2]));
       await tester.pumpAndSettle();
 
-      // Pushed onto its own route.
-      expect(find.byType(RashiDetail), findsOneWidget);
-      expect(find.text('${sign[1]} / ${sign[2]}'), findsWidgets);
-      expect(find.text(l.t('unavailable')), findsOneWidget);
-      expect(find.text(l.t('rashifalUnavailableNote')), findsWidgets);
+      // Pushed onto its own route, naming the sign and carrying its reading.
+      expect(find.byType(RashifalDetailScreen), findsOneWidget);
+      expect(find.text(sign[2]), findsWidgets);
 
-      // No prediction row is rendered while the content is unverified.
-      await _scrollToBottom(tester);
-      for (final row in [
-        l.t('general'),
-        l.t('career'),
-        l.t('finance'),
-        l.t('relationships'),
-        l.t('health'),
-        l.t('luckyNumber'),
-        l.t('luckyColour'),
-        l.t('dailyGuidance'),
-      ]) {
-        expect(find.text(row), findsNothing,
-            reason: '"$row" would imply a reading');
-      }
-      expect(find.text(l.t('unavailable')), findsOneWidget);
-    });
+      // Reading sections below the header remain reachable by scrolling.
+      final detailScrollable = find.descendant(
+        of: find.byType(RashifalDetailScreen),
+        matching: find.byType(Scrollable),
+      );
+      await tester.scrollUntilVisible(
+        find.text('career ${sign[0]} 2026-09-28'),
+        100,
+        scrollable: detailScrollable,
+      );
+      expect(find.text('career ${sign[0]} 2026-09-28'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('guidance ${sign[0]} 2026-09-28'),
+        100,
+        scrollable: detailScrollable,
+      );
+      expect(find.text('guidance ${sign[0]} 2026-09-28'), findsOneWidget);
 
-    testWidgets('no configured source means no prediction text at all',
-        (tester) async {
-      _useViewport(tester, const Size(360, 640));
-      final l = AppLocalizations(const Locale('hi'));
-      final state = await _state();
-      await state.setRashiSign(signs[0][0]);
-      await tester
-          .pumpWidget(_wrap(state: state, home: () => const RashifalScreen()));
-      await tester.pumpAndSettle();
-
-      // The stored sign is picked up as "mine" without any reading.
-      await _scrollToTop(tester);
-      expect(find.text(l.t('rashiNotSetNote')), findsNothing);
-
-      await _scrollTo(tester, find.text(signs[0][3]));
-      await tester.tap(_signTile(signs[0][3]));
-      await tester.pumpAndSettle();
-
-      await _scrollToBottom(tester);
-      for (final row in [
-        l.t('general'),
-        l.t('career'),
-        l.t('finance'),
-        l.t('relationships'),
-        l.t('health'),
-        l.t('luckyNumber'),
-        l.t('luckyColour'),
-        l.t('dailyGuidance'),
-      ]) {
-        expect(find.text(row), findsNothing, reason: row);
-      }
-      expect(find.text(l.t('unavailable')), findsOneWidget);
-      expect(find.text(l.t('guidanceOnly')), findsWidgets);
+      // The disclaimer sits at the very bottom of the page.
+      await tester.scrollUntilVisible(
+        find.text(l.t('rashifalDisclaimer')),
+        100,
+        scrollable: detailScrollable,
+      );
+      expect(find.text(l.t('rashifalDisclaimer')), findsOneWidget);
     });
 
     testWidgets('lays out without overflow at 2x text on a 320x480 screen',
@@ -465,14 +503,14 @@ void main() {
       _useViewport(tester, const Size(320, 480));
       final state = await _state();
       final errors = await _errorsDuring(() async {
-        await tester.pumpWidget(_wrap(
+        await tester.pumpWidget(_wrapRashifal(
           state: state,
-          home: () => const RashifalScreen(),
+          home: () => RashifalScreen(repository: repo()),
           textScaler: const TextScaler.linear(2.0),
         ));
         await tester.pumpAndSettle();
         for (final sign in signs) {
-          await _scrollTo(tester, find.text('${sign[1]} / ${sign[2]}'));
+          await _scrollTo(tester, find.text(sign[1]));
         }
       });
       expect(errors, isEmpty);

@@ -136,6 +136,18 @@ double _renderedMantraSize(WidgetTester tester) {
   return size!;
 }
 
+const _dev = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+String _toDev(int n) {
+  if (n == 0) return _dev[0];
+  final buf = StringBuffer();
+  var v = n;
+  while (v > 0) {
+    buf.write(_dev[v % 10]);
+    v ~/= 10;
+  }
+  return buf.toString().split('').reversed.join();
+}
+
 /// The live tap counter as the user sees it.
 String _counter(WidgetTester tester) =>
     tester.widget<Text>(find.byKey(const Key('jap_counter'))).data!;
@@ -255,7 +267,7 @@ void main() {
       }
       await tester.pump(const Duration(milliseconds: 100));
       final before = _counter(tester);
-      expect(before, '5');
+      expect(before, _toDev(5));
 
       await state.setMantraFontSizeIndex(3);
       await tester.pump(const Duration(milliseconds: 100));
@@ -380,7 +392,7 @@ void main() {
       expect(find.byType(GoldenTapGlow), findsWidgets);
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(_counter(tester), '10');
+      expect(_counter(tester), _toDev(10));
     });
   });
 

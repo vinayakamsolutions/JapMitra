@@ -78,6 +78,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 padding: const EdgeInsets.all(16),
                 child: DropdownButton<String>(
                   value: InheritedAppState.of(context).languageCode,
+                  underline: const SizedBox.shrink(),
                   items: const [
                     DropdownMenuItem(
                       value: 'hi',
@@ -118,7 +119,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         textInputAction: TextInputAction.done,
                         decoration: InputDecoration(
                           labelText: l.t('city'),
-                          border: const OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(context).cardTheme.color,
                         ),
                       ),
                     ),
@@ -174,21 +179,43 @@ class _OnboardingPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 96,
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFE87822).withValues(alpha: 0.2),
+                  const Color(0xFFD8A94A).withValues(alpha: 0.2),
+                ],
+              ),
+            ),
+            child: Icon(
+              icon,
+              size: 56,
+              color: const Color(0xFFE87822),
+            ),
           ),
           const SizedBox(height: 32),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineMedium,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF3E2415),
+                ),
           ),
           const SizedBox(height: 16),
           Text(
             description,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: const Color(0xFF8A6A3A),
+                  height: 1.5,
+                ),
           ),
           if (child != null) child!,
         ],

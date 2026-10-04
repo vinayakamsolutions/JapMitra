@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+
+import '../../core/theme/app_theme.dart';
 
 /// Extensible deity artwork registry.
 ///
@@ -93,60 +96,128 @@ class DeityBackground extends StatelessWidget {
     super.key,
     required this.deityKey,
     required this.child,
+    this.photo,
   });
 
   final String deityKey;
   final Widget child;
 
+  /// Optional path of a deity photo the user chose for this mantra.
+  ///
+  /// When it resolves, it replaces the bundled artwork for this mantra only. A
+  /// path that has gone missing falls back to the normal registry order rather
+  /// than leaving a hole in the layout.
+  final String? photo;
+
+  /// Fraction of the screen height that belongs to the deity artwork alone.
+  ///
+  /// The artwork owns this band outright and nothing else is laid out inside it,
+  /// so the deity stays the primary focal point and no counter, bead or progress
+  /// bar can ever be drawn across the face or body.
+  ///
+  /// Layout code that has to stay clear of the artwork must read this same
+  /// figure rather than repeating the number.
+  static const double kArtworkBandFraction = 0.34;
+
   @override
   Widget build(BuildContext context) {
+    final photoPath = photo?.trim();
+    final hasPhoto = photoPath != null && photoPath.isNotEmpty;
     final asset = DeityArtwork.assetFor(deityKey);
     final tint = DeityArtwork.tintFor(deityKey);
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFFFFF8ED), Color(0xFFFFFDF4)],
-            ),
-          ),
-        ),
-        // The artwork/fallback is positioned and sized as a fraction of the
-        // viewport, so it stays decorative on any device without pushing the
-        // foreground content around.
-        IgnorePointer(
-          child: Align(
-            alignment: const Alignment(0.45, -0.4),
-            child: FractionallySizedBox(
-              widthFactor: 0.72,
-              heightFactor: 0.52,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: tint.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(12),
+    return LayoutBuilder(
+      builder: (context, box) {
+        final band = box.maxHeight * kArtworkBandFraction;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFFFF8ED), Color(0xFFFFFDF4)],
                 ),
-                child: asset == null
-                    ? _DeityFallback(tint: tint)
-                    : Image.asset(
-                        asset,
-                        fit: BoxFit.contain,
-                        // A registered path whose file is not bundled yet must
-                        // degrade to the neutral fallback, never to an error.
-                        errorBuilder: (context, error, stack) =>
-                            _DeityFallback(tint: tint),
-                      ),
               ),
             ),
-          ),
-        ),
-        child,
-      ],
+            // Ambient wash behind the artwork, so the band reads as the focal
+            // point rather than as an arbitrary picture floating in the layout.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: band,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(0, -0.35),
+                      radius: 0.95,
+                      colors: <Color>[
+                        AppTheme.gold.withValues(alpha: 0.16),
+                        AppTheme.gold.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // The artwork itself, contained inside the band and centred, so it
+            // is never cropped and never reaches the content below.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: band,
+              child: IgnorePointer(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    box.maxWidth * 0.05,
+                    band * 0.04,
+                    box.maxWidth * 0.05,
+                    band * 0.06,
+                  ),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: tint.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: hasPhoto
+                        ? Image.file(
+                            File(photoPath),
+                            fit: BoxFit.contain,
+                            // A photo deleted from app storage must degrade to
+                            // the registry artwork, never to an error.
+                            errorBuilder: (context, error, stack) =>
+                                _artworkOrFallback(asset, tint),
+                          )
+                        : _artworkOrFallback(asset, tint),
+                  ),
+                ),
+              ),
+            ),
+            // The child still receives the whole screen: the tap surface must
+            // stay full-bleed so a tap anywhere counts, artwork band included.
+            child,
+          ],
+        );
+      },
     );
   }
 }
+
+/// Registry artwork when one is bundled, otherwise the neutral yantra.
+///
+/// A registered path whose file is not bundled yet degrades to the fallback
+/// rather than to an error, so approved artwork can be added later without a
+/// code change.
+Widget _artworkOrFallback(String? asset, Color tint) => asset == null
+    ? _DeityFallback(tint: tint)
+    : Image.asset(
+        asset,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stack) => _DeityFallback(tint: tint),
+      );
 
 /// Neutral geometric fallback: a concentric yantra in the deity's tint.
 ///

@@ -221,12 +221,40 @@ class AppLocalizations {
       'rashiNotSetNote': 'अपनी राशि चुनें, वह यहाँ हाइलाइट हो जाएगी।',
       'rashifalUnavailableNote':
           'आज की राशिफल सामग्री अभी उपलब्ध नहीं है। हम केवल सत्यापित स्रोत से ही राशिफल दिखाते हैं।',
+      'rashifalToday': 'आज का राशिफल',
+      'rashifalPrevDay': 'पिछला दिन',
+      'rashifalNextDay': 'अगला दिन',
+      'rashifalTodayShort': 'आज',
+      'rashifalPickSign': 'राशि चुनें',
+      'rashifalFutureNote':
+          'भविष्य की तारीख का राशिफल उपलब्ध नहीं है। कृपया आज या कोई पिछली तारीख चुनें।',
+      'rashifalFromCache': 'ऑफ़लाइन — सहेजा गया डेटा',
+      'rashifalFromRemote': 'ताज़ा डेटा',
+      'rashifalRetry': 'पुनः प्रयास',
+      'rashifalDisclaimer':
+          'यह राशिफल पारंपरिक ज्योतिषीय मान्यताओं पर आधारित दैनिक मार्गदर्शन है। इसे वैज्ञानिक भविष्यवाणी या निश्चित परिणाम के रूप में न लें।',
       'calculate': 'गणना करें',
       'calculateNumerology': 'मेरी संख्याएँ गणना करें',
       'forDate': 'तारीख़',
       'traditionalNote':
           'नामुम्र के पारंपरिक संबंध — वैज्ञानिक भविष्यवाणी नहीं।',
       'astroPhotoLabel': 'ज्योतिषाचार्य का चित्र',
+      'customMantraName': 'मंत्र का नाम',
+      'optional': 'वैकल्पिक',
+      'customMantraText': 'मंत्र का पाठ',
+      'deityPhoto': 'देवी/देवता की फोटो',
+      'choosePhoto': 'फोटो चुनें',
+      'replacePhoto': 'फोटो बदलें',
+      'removePhoto': 'फोटो हटाएँ',
+      'addCustomMantra': 'नया मंत्र जोड़ें',
+      'deleteCustomMantra': 'मंत्र हटाएँ',
+      'deleteCustomMantraBody':
+          'यह मंत्र और उसकी जप गिनती हमेशा के लिए हट जाएगी।',
+      'customMantraAdded': 'मंत्र जोड़ दिया गया।',
+      'photoFailed': 'फोटो नहीं जोड़ी जा सकी — मंत्र फोटो के बिना सहेजा गया।',
+      'noFestivalToday': 'आज कोई त्योहार या व्रत नहीं है।',
+      'viewFullPanchang': 'पूरा पंचांग देखें',
+      'timings': 'समय',
     },
     'en': {
       'app': 'JapMitra',
@@ -443,12 +471,41 @@ class AppLocalizations {
       'rashiNotSetNote': 'Pick a sign and it will be highlighted here.',
       'rashifalUnavailableNote':
           'Today\u2019s rashifal content is not available yet. We only show rashifal from a verified source.',
+      'rashifalToday': "Today's Rashifal",
+      'rashifalPrevDay': 'Previous day',
+      'rashifalNextDay': 'Next day',
+      'rashifalTodayShort': 'Today',
+      'rashifalPickSign': 'Pick a sign',
+      'rashifalFutureNote':
+          'Rashifal for a future date is not available. Please choose today or a past date.',
+      'rashifalFromCache': 'Offline — saved data',
+      'rashifalFromRemote': 'Fresh data',
+      'rashifalRetry': 'Retry',
+      'rashifalDisclaimer':
+          'This horoscope is daily guidance based on traditional astrological beliefs. It is not a scientifically established prediction or a guarantee of outcomes.',
       'calculate': 'Calculate',
       'calculateNumerology': 'Calculate my numbers',
       'forDate': 'For date',
       'traditionalNote':
           'Traditional numerology associations — not a scientific prediction.',
       'astroPhotoLabel': 'Photograph of the astrologer',
+      'customMantraName': 'Mantra Name',
+      'optional': 'Optional',
+      'customMantraText': 'Mantra Text',
+      'deityPhoto': 'Deity photo',
+      'choosePhoto': 'Choose photo',
+      'replacePhoto': 'Replace photo',
+      'removePhoto': 'Remove photo',
+      'addCustomMantra': 'Add custom mantra',
+      'deleteCustomMantra': 'Delete mantra',
+      'deleteCustomMantraBody':
+          'This mantra and its jap count will be permanently removed.',
+      'customMantraAdded': 'Mantra added.',
+      'photoFailed':
+          'That photo could not be used — the mantra was saved without it.',
+      'noFestivalToday': 'No festival or vrat today.',
+      'viewFullPanchang': 'View full Panchang',
+      'timings': 'Timings',
     }
   };
 

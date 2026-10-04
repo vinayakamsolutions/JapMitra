@@ -7,6 +7,7 @@ import 'package:japmitra/core/localization/app_localizations.dart';
 import 'package:japmitra/core/services/app_state.dart';
 import 'package:japmitra/data/local/jap_store.dart';
 import 'package:japmitra/data/repositories/jap_repository.dart';
+import 'package:japmitra/features/jap/deity_background.dart';
 import 'package:japmitra/features/jap/jap_screen.dart';
 import 'package:japmitra/main.dart';
 
@@ -14,6 +15,7 @@ import 'package:japmitra/main.dart';
 /// real debounced queue, with no sqflite binding.
 class MemStore implements JapStore {
   final List<MapEntry<String, JapEventRow>> rows = [];
+  final List<CustomMantra> custom = [];
 
   int totalFor(String mantra) {
     var sum = 0;
@@ -67,13 +69,23 @@ class MemStore implements JapStore {
           .toList();
 
   @override
-  Future<List<String>> listCustomMantras() async => [];
+  Future<List<CustomMantra>> listCustom() async => custom
+      .map((e) => CustomMantra(text: e.text, name: e.name, photo: e.photo))
+      .toList();
 
   @override
-  Future<void> addCustomMantra(String text) async {}
+  Future<void> addCustomMantra(String text,
+      {String? name, String? photo}) async {
+    custom.removeWhere((e) => e.text == text.trim());
+    custom.add(CustomMantra(
+        text: text.trim(),
+        name: (name?.trim().isEmpty ?? true) ? null : name!.trim(),
+        photo: (photo?.trim().isEmpty ?? true) ? null : photo!.trim()));
+  }
 
   @override
-  Future<void> removeCustomMantra(String text) async {}
+  Future<void> removeCustomMantra(String text) async =>
+      custom.removeWhere((e) => e.text == text);
 }
 
 Future<AppState> _appState(
@@ -185,6 +197,77 @@ void main() {
 
       expect(errors, isEmpty);
     });
+
+    testWidgets('keeps every readout clear of the deity artwork band',
+        (tester) async {
+      // The regression this guards: the artwork used to be painted full-bleed
+      // behind the dial, so the beads, counter and stats were drawn straight
+      // across the deity's face and body.
+      const size = Size(360, 640);
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final state = await _appState();
+      await tester.pumpWidget(_app(
+        state: state,
+        repo: JapRepository(store: MemStore()),
+      ));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      final band = size.height * DeityBackground.kArtworkBandFraction;
+      expect(band, closeTo(size.height * 0.34, 0.001));
+
+      for (final key in const [
+        Key('jap_deity_name'),
+        Key('jap_counter'),
+        Key('jap_mala_label'),
+        Key('jap_mantra_name'),
+        Key('jap_today'),
+      ]) {
+        expect(find.byKey(key), findsOneWidget, reason: '$key is missing');
+        expect(
+          tester.getTopLeft(find.byKey(key)).dy,
+          greaterThanOrEqualTo(band),
+          reason: '$key overlaps the artwork band',
+        );
+      }
+    });
+
+    testWidgets('still counts a tap that lands on the artwork band',
+        (tester) async {
+      // The artwork owns the top of the screen visually, but the tap surface
+      // must stay full-bleed: a devotional app cannot ignore taps just because
+      // they were aimed at the deity's picture.
+      const size = Size(360, 640);
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final store = MemStore();
+      final state = await _appState();
+      await tester.pumpWidget(_app(
+        state: state,
+        repo: JapRepository(store: store),
+      ));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // Deliberately inside the artwork band.
+      final inBand = Offset(size.width / 2, size.height * 0.15);
+      expect(inBand.dy,
+          lessThan(DeityBackground.kArtworkBandFraction * size.height));
+
+      await tester.tapAt(inBand);
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // The session count updates synchronously, so this alone proves the tap
+      // reached the listener.
+      expect(_counter(tester), _toDev(1));
+
+      // And it must still reach storage once the debounced queue flushes.
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(store.totalFor('ॐ नमः शिवाय'), 1);
+    });
   });
 
   group('Jap screen counting', () {
@@ -201,7 +284,7 @@ void main() {
       for (var i = 1; i <= 20; i++) {
         await tester.tapAt(const Offset(200, 500));
         await tester.pump();
-        expect(_counter(tester), '$i', reason: 'tap #$i');
+        expect(_counter(tester), _toDev(i), reason: 'tap #$i');
       }
     });
 
@@ -220,7 +303,7 @@ void main() {
       }
       await tester.pump();
 
-      expect(_counter(tester), '50');
+      expect(_counter(tester), _toDev(50));
 
       // The queue batches the burst into a single write, and loses nothing.
       await tester.pump(const Duration(milliseconds: 700));
@@ -249,7 +332,7 @@ void main() {
 
       expect(store.rows.length, 1);
       expect(store.rows.single.value.count, 30);
-      expect(_counter(tester), '30');
+      expect(_counter(tester), _toDev(30));
     });
 
     testWidgets('the 108th tap counts, completes a mala and resets progress',
@@ -268,7 +351,7 @@ void main() {
         await tester.tapAt(const Offset(200, 500));
       }
       await tester.pump();
-      expect(_counter(tester), '107');
+      expect(_counter(tester), _toDev(107));
       expect(_malaText(tester), contains('107/108'));
       expect(_completedMalas(tester), contains('0'));
 
@@ -276,7 +359,7 @@ void main() {
       await tester.pump();
 
       // The boundary itself is counted, and the current mala restarts at 0.
-      expect(_counter(tester), '108');
+      expect(_counter(tester), _toDev(108));
       expect(_malaText(tester), contains('1  •  0/108'));
       expect(_completedMalas(tester), contains('1'));
       expect(find.textContaining('पूर्ण हुई'), findsOneWidget,
@@ -305,7 +388,7 @@ void main() {
       }
       await tester.pump(const Duration(milliseconds: 700));
       await tester.pump();
-      expect(_counter(tester), '12');
+      expect(_counter(tester), _toDev(12));
       expect(store.totalFor('ॐ नमः शिवाय'), 12);
 
       // Leave the screen entirely, then come back to it.
@@ -317,7 +400,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
 
       // The session counter is fresh, and today still carries the 12 taps.
-      expect(_counter(tester), '0');
+      expect(_counter(tester), _toDev(0));
       expect(_todayValue(tester), '12',
           reason: 'store rows: ${store.rows.length}');
       expect(store.totalFor('ॐ नमः शिवाय'), 12);
@@ -396,9 +479,86 @@ void main() {
       });
 
       expect(errors, isEmpty);
-      expect(_counter(tester), '12');
+      expect(_counter(tester), _toDev(12));
     });
   });
+
+  group('custom mantra metadata', () {
+    test('the name and photo survive a round trip through the store', () async {
+      final repo = JapRepository(store: MemStore());
+
+      await repo.addCustom('स्वयंभू मंत्र',
+          name: 'मेरा मंत्र', photo: '/data/deity.jpg');
+
+      final all = await repo.custom();
+      expect(all, hasLength(1));
+      expect(all.single.text, 'स्वयंभू मंत्र');
+      expect(all.single.name, 'मेरा मंत्र');
+      expect(all.single.photo, '/data/deity.jpg');
+      expect(all.single.label, 'मेरा मंत्र');
+    });
+
+    test('blank metadata is stored as absent, not as an empty string',
+        () async {
+      final repo = JapRepository(store: MemStore());
+
+      await repo.addCustom('स्वयंभू मंत्र', name: '   ', photo: '');
+
+      final all = await repo.custom();
+      expect(all.single.name, isNull);
+      expect(all.single.photo, isNull);
+      expect(all.single.hasPhoto, isFalse);
+      // Falls back to the text.
+      expect(all.single.label, 'स्वयंभू मंत्र');
+    });
+
+    test('re-adding a mantra updates its metadata instead of duplicating',
+        () async {
+      final repo = JapRepository(store: MemStore());
+
+      await repo.addCustom('स्वयंभू मंत्र', name: 'पहला नाम');
+      await repo.addCustom('स्वयंभू मंत्र', name: 'दूसरा नाम');
+
+      final all = await repo.custom();
+      expect(all, hasLength(1));
+      expect(all.single.name, 'दूसरा नाम');
+    });
+
+    test('the legacy string accessor still lists the mantras', () async {
+      final repo = JapRepository(store: MemStore());
+      await repo.addCustom('स्वयंभू मंत्र', name: 'मेरा मंत्र');
+
+      // Kept so any remaining callers of the old API keep working.
+      expect(await repo.customMantras(), ['स्वयंभू मंत्र']);
+    });
+
+    test('deleting a mantra removes it and its japs stay separate', () async {
+      final store = MemStore();
+      final repo = JapRepository(store: store);
+
+      await repo.addCustom('स्वयंभू मंत्र', name: 'मेरा मंत्र');
+      await repo.addJaps('स्वयंभू मंत्र', 5);
+
+      await repo.deleteCustom('स्वयंभू मंत्र');
+
+      expect(await repo.custom(), isEmpty);
+      // The recorded count is untouched: deleting a mantra must never silently
+      // rewrite history.
+      expect(store.totalFor('स्वयंभू मंत्र'), 5);
+    });
+  });
+}
+
+const _dev = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+String _toDev(int n) {
+  if (n == 0) return _dev[0];
+  final buf = StringBuffer();
+  var v = n;
+  while (v > 0) {
+    buf.write(_dev[v % 10]);
+    v ~/= 10;
+  }
+  return buf.toString().split('').reversed.join();
 }
 
 String _counter(WidgetTester tester) =>

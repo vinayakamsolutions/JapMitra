@@ -67,11 +67,30 @@ class MantraInfo {
       {required this.name,
       required this.category,
       required this.deityKey,
-      this.isCustom = false});
+      this.isCustom = false,
+      this.displayName,
+      this.photo});
   final String name;
   final String category;
   final String deityKey;
   final bool isCustom;
+
+  /// The name the user gave a custom mantra, when they set one.
+  ///
+  /// [name] remains the mantra text, because that is what every count and stored
+  /// record is keyed on.
+  final String? displayName;
+
+  /// Path of the deity photo the user chose for this custom mantra, or null.
+  ///
+  /// When set it replaces the bundled deity artwork for this mantra only.
+  final String? photo;
+
+  /// The user's name when there is one, otherwise the mantra text.
+  String get label {
+    final d = displayName?.trim();
+    return d == null || d.isEmpty ? name : d;
+  }
 
   /// Used to select a devotional completion greeting.
   String get deityName {
@@ -95,10 +114,11 @@ class MantraInfo {
     }
   }
 
-  String get completionMessage => 'आपकी $name की माला पूर्ण हुई। शुभ संकल्प।';
+  String get completionMessage => 'आपकी $label की माला पूर्ण हुई। शुभ संकल्प।';
 }
 
-MantraInfo mantraInfoFor(String name, {bool isCustom = false}) {
+MantraInfo mantraInfoFor(String name,
+    {bool isCustom = false, String? displayName, String? photo}) {
   for (final m in defaultMantras) {
     if (m[1] == name) {
       return MantraInfo(
@@ -107,7 +127,12 @@ MantraInfo mantraInfoFor(String name, {bool isCustom = false}) {
   }
   if (isCustom) {
     return MantraInfo(
-        name: name, category: 'Custom', deityKey: 'om', isCustom: true);
+        name: name,
+        category: 'Custom',
+        deityKey: 'om',
+        isCustom: true,
+        displayName: displayName,
+        photo: photo);
   }
   return MantraInfo(name: name, category: 'Popular', deityKey: 'om');
 }
