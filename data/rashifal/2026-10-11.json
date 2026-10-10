@@ -1,0 +1,250 @@
+{
+  "date": "2026-10-11",
+  "generator": "scripts/generate_rashifal.py",
+  "languages": {
+    "hi": {
+      "mesha": {
+        "general": "पहले से चल रहे कार्यों में आज प्रगति दिखाई दे सकती है।",
+        "career": "लंबित कार्यों को प्राथमिकता दें और एक-एक करके पूरा करें।",
+        "finance": "आज बड़े वित्तीय सौदों से बचना बेहतर है।",
+        "love": "छोटी सी नेक इच्छा भी बड़ा फर्क डाल सकती है।",
+        "health": "पर्याप्त पानी पिएं और संतुलित आहार का ध्यान रखें।",
+        "luckyNumber": 2,
+        "luckyColour": "बैंगनी",
+        "guidance": "छोटे लक्ष्य तय करें और उन्हें पूरा करते रहें। आत्मविश्वास से काम आसान होगा।"
+      },
+      "vrishabha": {
+        "general": "आज मन की शांति बनाए रखना मुख्य है; छोटी जीतें अपने आप मिलेंगी।",
+        "career": "धैर्य से किया गया काम आज अच्छे परिणाम दे सकता है।",
+        "finance": "छोटी बचत भी आगे चलकर बड़ा योगदान दे सकती है।",
+        "love": "धैर्य और समझ से विवाद सुलझाने में आसानी होगी।",
+        "health": "सुबह की सैर मन और शरीर दोनों को तरोताज़ा करेगी।",
+        "luckyNumber": 2,
+        "luckyColour": "नीला",
+        "guidance": "आज अपने भीतर की शांति पर ज़ोर दें। धैर्य आपको संतुलन देगा।"
+      },
+      "mithun": {
+        "general": "पहले से चल रहे कार्यों में आज प्रगति दिखाई दे सकती है।",
+        "career": "लंबित कार्यों को प्राथमिकता दें और एक-एक करके पूरा करें।",
+        "finance": "आज बड़े वित्तीय सौदों से बचना बेहतर है।",
+        "love": "छोटी सी नेक इच्छा भी बड़ा फर्क डाल सकती है।",
+        "health": "पर्याप्त पानी पिएं और संतुलित आहार का ध्यान रखें।",
+        "luckyNumber": 9,
+        "luckyColour": "सुनहरा",
+        "guidance": "छोटे लक्ष्य तय करें और उन्हें पूरा करते रहें। समझदारी से काम आसान होगा।"
+      },
+      "karka": {
+        "general": "आज मन की शांति बनाए रखना मुख्य है; छोटी जीतें अपने आप मिलेंगी।",
+        "career": "धैर्य से किया गया काम आज अच्छे परिणाम दे सकता है।",
+        "finance": "छोटी बचत भी आगे चलकर बड़ा योगदान दे सकती है।",
+        "love": "धैर्य और समझ से विवाद सुलझाने में आसानी होगी।",
+        "health": "सुबह की सैर मन और शरीर दोनों को तरोताज़ा करेगी।",
+        "luckyNumber": 5,
+        "luckyColour": "नीला",
+        "guidance": "आज अपने भीतर की शांति पर ज़ोर दें। संवेदनशीलता आपको संतुलन देगा।"
+      },
+      "simha": {
+        "general": "आज का दिन संतुलन बनाए रखने पर जोर देता है। जल्दबाज़ी से बचें।",
+        "career": "आज किसी अनुभवी व्यक्ति की सलाह लेना फायदेमंद रहेगा।",
+        "finance": "पुराने वित्तीय निर्णयों की समीक्षा करने का अवसर है।",
+        "love": "परिवार के साथ समय बिताने से संबंध मज़बूत होंगे।",
+        "health": "आज अतिरिक्त तनाव से बचें और विश्राम को प्राथमिकता दें।",
+        "luckyNumber": 1,
+        "luckyColour": "बैंगनी",
+        "guidance": "काम और विश्राम का संतुलन बनाए रखें। नेतृत्व आपको सही राह दिखाएगा।"
+      },
+      "kanya": {
+        "general": "आज का दिन संतुलन बनाए रखने पर जोर देता है। जल्दबाज़ी से बचें।",
+        "career": "आज किसी अनुभवी व्यक्ति की सलाह लेना फायदेमंद रहेगा।",
+        "finance": "पुराने वित्तीय निर्णयों की समीक्षा करने का अवसर है।",
+        "love": "परिवार के साथ समय बिताने से संबंध मज़बूत होंगे।",
+        "health": "आज अतिरिक्त तनाव से बचें और विश्राम को प्राथमिकता दें।",
+        "luckyNumber": 2,
+        "luckyColour": "सफ़ेद",
+        "guidance": "काम और विश्राम का संतुलन बनाए रखें। व्यवस्थितता आपको सही राह दिखाएगा।"
+      },
+      "tula": {
+        "general": "आज का दिन संतुलन बनाए रखने पर जोर देता है। जल्दबाज़ी से बचें।",
+        "career": "आज किसी अनुभवी व्यक्ति की सलाह लेना फायदेमंद रहेगा।",
+        "finance": "पुराने वित्तीय निर्णयों की समीक्षा करने का अवसर है।",
+        "love": "परिवार के साथ समय बिताने से संबंध मज़बूत होंगे।",
+        "health": "आज अतिरिक्त तनाव से बचें और विश्राम को प्राथमिकता दें।",
+        "luckyNumber": 8,
+        "luckyColour": "सफ़ेद",
+        "guidance": "काम और विश्राम का संतुलन बनाए रखें। संतुलन आपको सही राह दिखाएगा।"
+      },
+      "vrishchik": {
+        "general": "आज मन की शांति बनाए रखना मुख्य है; छोटी जीतें अपने आप मिलेंगी।",
+        "career": "धैर्य से किया गया काम आज अच्छे परिणाम दे सकता है।",
+        "finance": "छोटी बचत भी आगे चलकर बड़ा योगदान दे सकती है।",
+        "love": "धैर्य और समझ से विवाद सुलझाने में आसानी होगी।",
+        "health": "सुबह की सैर मन और शरीर दोनों को तरोताज़ा करेगी।",
+        "luckyNumber": 7,
+        "luckyColour": "सफ़ेद",
+        "guidance": "आज अपने भीतर की शांति पर ज़ोर दें। एकाग्रता आपको संतुलन देगा।"
+      },
+      "dhanu": {
+        "general": "आज का दिन संतुलन बनाए रखने पर जोर देता है। जल्दबाज़ी से बचें।",
+        "career": "आज किसी अनुभवी व्यक्ति की सलाह लेना फायदेमंद रहेगा।",
+        "finance": "पुराने वित्तीय निर्णयों की समीक्षा करने का अवसर है।",
+        "love": "परिवार के साथ समय बिताने से संबंध मज़बूत होंगे।",
+        "health": "आज अतिरिक्त तनाव से बचें और विश्राम को प्राथमिकता दें।",
+        "luckyNumber": 6,
+        "luckyColour": "सफ़ेद",
+        "guidance": "काम और विश्राम का संतुलन बनाए रखें। उत्साह आपको सही राह दिखाएगा।"
+      },
+      "makar": {
+        "general": "आज का दिन संतुलन बनाए रखने पर जोर देता है। जल्दबाज़ी से बचें।",
+        "career": "आज किसी अनुभवी व्यक्ति की सलाह लेना फायदेमंद रहेगा।",
+        "finance": "पुराने वित्तीय निर्णयों की समीक्षा करने का अवसर है।",
+        "love": "परिवार के साथ समय बिताने से संबंध मज़बूत होंगे।",
+        "health": "आज अतिरिक्त तनाव से बचें और विश्राम को प्राथमिकता दें।",
+        "luckyNumber": 5,
+        "luckyColour": "नीला",
+        "guidance": "काम और विश्राम का संतुलन बनाए रखें। अनुशासन आपको सही राह दिखाएगा।"
+      },
+      "kumbh": {
+        "general": "आपका दिन संतुलित रहने की संभावना है। धैर्य रखें और योजना के अनुसार आगे बढ़ें।",
+        "career": "कार्यस्थल पर आपकी मेहनत की सराहना हो सकती है।",
+        "finance": "आय और व्यय का हिसाब रखना आज विशेष उपयोगी रहेगा।",
+        "love": "प्रियजनों के साथ संवाद में साफ़-साफ़ बात करें।",
+        "health": "नियमित भोजन और पर्याप्त नींद आज विशेष मायने रखते हैं।",
+        "luckyNumber": 2,
+        "luckyColour": "हल्का हरा",
+        "guidance": "आज धैर्य और निरंतरता आपके सबसे बड़े साथी रहेंगे। सेवा भाव को अपनाएं।"
+      },
+      "meen": {
+        "general": "मीन राशि के लिए आज नए विचारों को अपनाने का अवसर है।",
+        "career": "नई जिम्मेदारी स्वीकारने से पहले अपनी तैयारी अच्छी तरह जांचें।",
+        "finance": "बिना आवश्यकता के खर्च से बचें और बचत पर ध्यान दें।",
+        "love": "आज किसी प्रियजन की भावनाओं को समझने का दिन है।",
+        "health": "हल्की व्यायाम या सैर से ऊर्जा बनाए रहेगी।",
+        "luckyNumber": 7,
+        "luckyColour": "गुलाबी",
+        "guidance": "पहले उस काम पर ध्यान दें जो सबसे ज़्यादा बाकी है। कल्पना यहाँ काम आएगा।"
+      }
+    },
+    "en": {
+      "mesha": {
+        "general": "Progress on ongoing work may become visible today.",
+        "career": "Prioritise pending tasks and finish them one at a time.",
+        "finance": "It is better to avoid major financial commitments today.",
+        "love": "A small kind gesture can make a big difference.",
+        "health": "Drink enough water and keep your diet balanced.",
+        "luckyNumber": 2,
+        "luckyColour": "violet",
+        "guidance": "Set small goals and keep completing them. confidence makes the work easier."
+      },
+      "vrishabha": {
+        "general": "Keeping a calm mind is the main theme; small wins will come on their own.",
+        "career": "Patient effort is likely to bring good results today.",
+        "finance": "Small savings can make a big difference over time.",
+        "love": "Patience and understanding will ease disagreements.",
+        "health": "A morning walk will refresh both mind and body.",
+        "luckyNumber": 2,
+        "luckyColour": "blue",
+        "guidance": "Today, emphasise inner calm. patience will keep you steady."
+      },
+      "mithun": {
+        "general": "Progress on ongoing work may become visible today.",
+        "career": "Prioritise pending tasks and finish them one at a time.",
+        "finance": "It is better to avoid major financial commitments today.",
+        "love": "A small kind gesture can make a big difference.",
+        "health": "Drink enough water and keep your diet balanced.",
+        "luckyNumber": 9,
+        "luckyColour": "golden",
+        "guidance": "Set small goals and keep completing them. thoughtfulness makes the work easier."
+      },
+      "karka": {
+        "general": "Keeping a calm mind is the main theme; small wins will come on their own.",
+        "career": "Patient effort is likely to bring good results today.",
+        "finance": "Small savings can make a big difference over time.",
+        "love": "Patience and understanding will ease disagreements.",
+        "health": "A morning walk will refresh both mind and body.",
+        "luckyNumber": 5,
+        "luckyColour": "blue",
+        "guidance": "Today, emphasise inner calm. sensitivity will keep you steady."
+      },
+      "simha": {
+        "general": "The day stresses balance; avoid rushing into decisions.",
+        "career": "Advice from an experienced person will prove useful today.",
+        "finance": "It is a good day to review past financial decisions.",
+        "love": "Spending time with family will strengthen bonds.",
+        "health": "Avoid extra strain today; prioritise rest.",
+        "luckyNumber": 1,
+        "luckyColour": "violet",
+        "guidance": "Keep a balance between work and rest. leadership will show you the way."
+      },
+      "kanya": {
+        "general": "The day stresses balance; avoid rushing into decisions.",
+        "career": "Advice from an experienced person will prove useful today.",
+        "finance": "It is a good day to review past financial decisions.",
+        "love": "Spending time with family will strengthen bonds.",
+        "health": "Avoid extra strain today; prioritise rest.",
+        "luckyNumber": 2,
+        "luckyColour": "white",
+        "guidance": "Keep a balance between work and rest. orderliness will show you the way."
+      },
+      "tula": {
+        "general": "The day stresses balance; avoid rushing into decisions.",
+        "career": "Advice from an experienced person will prove useful today.",
+        "finance": "It is a good day to review past financial decisions.",
+        "love": "Spending time with family will strengthen bonds.",
+        "health": "Avoid extra strain today; prioritise rest.",
+        "luckyNumber": 8,
+        "luckyColour": "white",
+        "guidance": "Keep a balance between work and rest. balance will show you the way."
+      },
+      "vrishchik": {
+        "general": "Keeping a calm mind is the main theme; small wins will come on their own.",
+        "career": "Patient effort is likely to bring good results today.",
+        "finance": "Small savings can make a big difference over time.",
+        "love": "Patience and understanding will ease disagreements.",
+        "health": "A morning walk will refresh both mind and body.",
+        "luckyNumber": 7,
+        "luckyColour": "white",
+        "guidance": "Today, emphasise inner calm. focus will keep you steady."
+      },
+      "dhanu": {
+        "general": "The day stresses balance; avoid rushing into decisions.",
+        "career": "Advice from an experienced person will prove useful today.",
+        "finance": "It is a good day to review past financial decisions.",
+        "love": "Spending time with family will strengthen bonds.",
+        "health": "Avoid extra strain today; prioritise rest.",
+        "luckyNumber": 6,
+        "luckyColour": "white",
+        "guidance": "Keep a balance between work and rest. enthusiasm will show you the way."
+      },
+      "makar": {
+        "general": "The day stresses balance; avoid rushing into decisions.",
+        "career": "Advice from an experienced person will prove useful today.",
+        "finance": "It is a good day to review past financial decisions.",
+        "love": "Spending time with family will strengthen bonds.",
+        "health": "Avoid extra strain today; prioritise rest.",
+        "luckyNumber": 5,
+        "luckyColour": "blue",
+        "guidance": "Keep a balance between work and rest. discipline will show you the way."
+      },
+      "kumbh": {
+        "general": "Your day is likely to stay balanced. Be patient and follow your plan.",
+        "career": "Your hard work is likely to be noticed at work.",
+        "finance": "Tracking income and expenses is especially useful today.",
+        "love": "Speak clearly and openly with loved ones.",
+        "health": "Regular meals and enough sleep matter especially today.",
+        "luckyNumber": 2,
+        "luckyColour": "light green",
+        "guidance": "Patience and consistency will be your greatest allies today. Embrace a spirit of service."
+      },
+      "meen": {
+        "general": "For Meen signs, today favours adopting a fresh approach.",
+        "career": "Before taking on a new responsibility, check your preparation.",
+        "finance": "Avoid spending without need; focus on saving.",
+        "love": "Today is a day for understanding a loved one's feelings.",
+        "health": "Light exercise or a walk will keep your energy up.",
+        "luckyNumber": 7,
+        "luckyColour": "pink",
+        "guidance": "Focus first on the task that is most overdue. imagination will help here."
+      }
+    }
+  }
+}
