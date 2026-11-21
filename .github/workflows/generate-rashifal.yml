@@ -100,7 +100,7 @@ jobs:
           else:
               print(f"No missing dates (latest: {latest}, today: {today_ist})")
 
-          Path(".recovery_dates").write_text("\n".join(missing), encoding="utf-8")
+          Path(".recovery_dates").write_text("".join(f"{d}\n" for d in missing), encoding="utf-8")
           PY
 
       # Generate each missed date sequentially. The generator validates each
@@ -152,13 +152,14 @@ jobs:
           # between steps.
           echo "TARGET_DATE=$TARGET_DATE" >> "$GITHUB_ENV"
 
-          # Build list of all dates to validate (recovered + target)
+          # Build the list of all dates to validate (recovered + target) with
+          # Python: shell cat/echo would concatenate the last recovery date and
+          # the target date when the recovery file has no trailing newline.
           DATES_FILE=".validation_dates"
-          : > "$DATES_FILE"
-          if [ -f .recovery_dates ] && [ -s .recovery_dates ]; then
-            cat .recovery_dates >> "$DATES_FILE"
-          fi
-          echo "$TARGET_DATE" >> "$DATES_FILE"
+          python scripts/rashifal_validation_dates.py \
+            --recovery-file .recovery_dates \
+            --target-date "$TARGET_DATE" \
+            --output "$DATES_FILE"
 
           python - "$DATES_FILE" <<'PY'
           import json, sys
@@ -218,6 +219,7 @@ jobs:
       # built-in token and CLI — no external services or secrets.
       - name: Notify on failure
         if: failure()
-        run: 'gh issue create --title "Rashifal workflow failed: ${{ github.run_id }}" --body "The daily Rashifal workflow failed. Run ID: ${{ github.run_id }}. Please check the logs and re-run via workflow_dispatch if needed." --label "bug" --label "automation"'
+        continue-on-error: true
+        run: 'gh issue create --title "Rashifal workflow failed: ${{ github.run_id }}" --body "The daily Rashifal workflow failed. Run ID: ${{ github.run_id }}. Please check the logs and re-run via workflow_dispatch if needed."'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
